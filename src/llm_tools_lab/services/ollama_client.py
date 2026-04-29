@@ -25,7 +25,6 @@ def run_agent(user_message: str, model: str = "qwen3:8b") -> str:
             think=True,
         )
         messages.append(response.message.model_dump(exclude_none=True))
-        print(response.message.tool_calls)
         # Check tool calls
         if response.message.tool_calls:
             for tc in response.message.tool_calls:
