@@ -1,18 +1,26 @@
 from ollama import chat, ChatResponse
 from llm_tools_lab.tools.registry import get_tools_for_message
+from collections.abc import Callable
+
 
 # Const
 RECURSION_LIMIT = 10
 
 
-def run_agent(user_message: str, model: str = "qwen3:8b") -> str:
+def run_agent(
+    user_message: str,
+    model: str = "qwen3:8b",
+    tools: list[Callable] | None = None,
+    think: bool = False,
+) -> str:
     # Create message array
     messages = [{"role": "user", "content": user_message}]
     # Extract tools for message
-    tools = get_tools_for_message(user_message)
-    # Checks tools
-    if not tools:
-        raise ValueError(f"No tools found for message: {user_message}")
+    if tools is None:
+        tools = get_tools_for_message(user_message)
+        # Checks tools
+        if not tools:
+            raise ValueError(f"No tools found for message: {user_message}")
     # Construct dict of tools
     available = {fn.__name__: fn for fn in tools}
     # Agent loop indefinite
@@ -22,7 +30,7 @@ def run_agent(user_message: str, model: str = "qwen3:8b") -> str:
             model=model,
             messages=messages,
             tools=tools,
-            think=True,
+            think=think,
         )
         messages.append(response.message.model_dump(exclude_none=True))
         # Check tool calls
