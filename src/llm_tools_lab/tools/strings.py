@@ -51,3 +51,4 @@ def capitalize(text: str) -> str:
 
 
 STRING_TOOLS = [uppercase, reverse, count_words, capitalize]
+AVAILABLE_FUNCTIONS = {fn.__name__: fn for fn in STRING_TOOLS}

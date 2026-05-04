@@ -74,3 +74,4 @@ def power(base: float, exp: float) -> float:
 
 
 MATH_TOOLS = [add, subtract, multiply, divide, power]
+AVAILABLE_FUNCTIONS = {fn.__name__: fn for fn in MATH_TOOLS}

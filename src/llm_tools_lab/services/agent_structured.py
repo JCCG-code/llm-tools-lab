@@ -1,8 +1,9 @@
+import instructor
+from instructor.exceptions import InstructorRetryException
+
 from llm_tools_lab.models.calculator import CalculatorResponse
 from llm_tools_lab.services.ollama_client import run_agent
 from llm_tools_lab.tools.calculator import MATH_TOOLS
-import instructor
-from instructor.exceptions import InstructorRetryException
 
 
 def get_structured_calculation(

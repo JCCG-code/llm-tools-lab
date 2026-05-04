@@ -1,5 +1,6 @@
 import instructor
 from instructor.exceptions import InstructorRetryException
+
 from llm_tools_lab.models.weather import WeatherForecast
 
 
