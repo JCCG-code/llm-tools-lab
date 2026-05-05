@@ -2,6 +2,7 @@ from collections.abc import AsyncGenerator, Callable, Iterator
 
 from ollama import ChatResponse, Message, chat
 
+from llm_tools_lab.models.agent import AgentResponse
 from llm_tools_lab.tools.registry import get_tools_for_message
 
 # Const
@@ -13,9 +14,11 @@ def run_agent(
     model: str = "qwen3:8b",
     tools: list[Callable] | None = None,
     think: bool = False,
-) -> str:
+) -> AgentResponse:
     # Create message array
     messages = [{"role": "user", "content": user_message}]
+    # Tool calls count
+    tool_calls_count = 0
     # Extract tools for message
     if tools is None:
         tools = get_tools_for_message(user_message)
@@ -51,6 +54,7 @@ def run_agent(
                             "content": str(result),
                         }
                     )
+                    tool_calls_count += 1
         else:
             break
     else:
@@ -58,7 +62,16 @@ def run_agent(
     # Return check
     if not response.message.content:
         raise ValueError("Model returned empty response")
-    return response.message.content
+    # Response time in miliseconds calc
+    response_time_ms = (
+        (response.total_duration // 1_000_000) if response.total_duration else 0
+    )
+    # Return statement
+    return AgentResponse(
+        message=response.message.content,
+        response_time_ms=response_time_ms,
+        tool_calls_count=tool_calls_count,
+    )
 
 
 async def stream_agent(
