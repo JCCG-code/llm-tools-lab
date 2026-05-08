@@ -1,4 +1,3 @@
-from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 
 from llm_tools_lab.rag.chunker import chunk_text

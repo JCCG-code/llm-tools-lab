@@ -5,7 +5,7 @@ from llm_tools_lab.rag.vector_store import (
 )
 
 
-def search(query: str, top_k: int = 3) -> list[dict]:
+def search(query: str, top_k: int = 3, min_score: float = 0.5) -> list[dict]:
     """Search for similar chunks in Qdrant. Returns top_k most similar chunks."""
     # Creates client and Qdrant collection
     client = get_client()
@@ -19,12 +19,13 @@ def search(query: str, top_k: int = 3) -> list[dict]:
         if point.payload is None:
             continue
         # Add to response data
-        res.append(
-            {
-                "text": point.payload["text"],
-                "source": point.payload["source"],
-                "score": point.score,
-            }
-        )
+        if point.score >= min_score:
+            res.append(
+                {
+                    "text": point.payload["text"],
+                    "source": point.payload["source"],
+                    "score": point.score,
+                }
+            )
     # Return statement
     return res
