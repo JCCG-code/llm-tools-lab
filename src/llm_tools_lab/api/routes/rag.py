@@ -23,3 +23,15 @@ async def rag_query(request: RagRequest) -> str:
         raise HTTPException(status_code=503, detail="Ollama connection error")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/hybrid")
+async def rag_hybrid(request: RagRequest) -> str:
+    try:
+        return await asyncio.to_thread(
+            text_rag_agent, request.text, request.model, use_hybrid=True
+        )
+    except ConnectionError:
+        raise HTTPException(status_code=503, detail="Ollama connection error")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
