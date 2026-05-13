@@ -3,6 +3,7 @@ from collections.abc import AsyncGenerator, Callable, Iterator
 from ollama import ChatResponse, Message, chat
 
 from llm_tools_lab.models.agent import AgentResponse
+from llm_tools_lab.observability.langfuse_client import get_langfuse
 from llm_tools_lab.tools.registry import get_tools_for_message
 
 # Const
@@ -15,50 +16,64 @@ def run_agent(
     tools: list[Callable] | None = None,
     think: bool = False,
 ) -> AgentResponse:
-    # Create message array
-    messages = [{"role": "user", "content": user_message}]
-    # Tool calls count
-    tool_calls_count = 0
-    # Extract tools for message
-    if tools is None:
-        tools = get_tools_for_message(user_message)
-        # Checks tools
-        if not tools:
-            raise ValueError(f"No tools found for message: {user_message}")
-    # Construct dict of tools
-    available = {fn.__name__: fn for fn in tools}
-    # Agent loop indefinite
-    for _ in range(RECURSION_LIMIT):
-        # First thinking iteration
-        response: ChatResponse = chat(
-            model=model,
-            messages=messages,
-            tools=tools,
-            think=think,
+    # Get langfuse
+    langfuse = get_langfuse()
+    with langfuse.start_as_current_observation(
+        as_type="span", name="ollama_query"
+    ) as root:
+        root.update(
+            input={
+                "query": user_message,
+                "model": model,
+                "tools": tools,
+                "think": think,
+            }
         )
-        messages.append(response.message.model_dump(exclude_none=True))
-        # Check tool calls
-        if response.message.tool_calls:
-            for tc in response.message.tool_calls:
-                # Extract data
-                function_name = tc.function.name
-                function_args = tc.function.arguments
-                # Checks functions detected
-                if function_name in available:
-                    result = available[function_name](**function_args)
-                    # Add tool to messages
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "tool_name": function_name,
-                            "content": str(result),
-                        }
-                    )
-                    tool_calls_count += 1
+        # Create message array
+        messages = [{"role": "user", "content": user_message}]
+        # Tool calls count
+        tool_calls_count = 0
+        # Extract tools for message
+        if tools is None:
+            tools = get_tools_for_message(user_message)
+            # Checks tools
+            if not tools:
+                raise ValueError(f"No tools found for message: {user_message}")
+        # Construct dict of tools
+        available = {fn.__name__: fn for fn in tools}
+        # Agent loop indefinite
+        for _ in range(RECURSION_LIMIT):
+            # First thinking iteration
+            response: ChatResponse = chat(
+                model=model,
+                messages=messages,
+                tools=tools,
+                think=think,
+            )
+            messages.append(response.message.model_dump(exclude_none=True))
+            # Check tool calls
+            if response.message.tool_calls:
+                for tc in response.message.tool_calls:
+                    # Extract data
+                    function_name = tc.function.name
+                    function_args = tc.function.arguments
+                    # Checks functions detected
+                    if function_name in available:
+                        result = available[function_name](**function_args)
+                        # Add tool to messages
+                        messages.append(
+                            {
+                                "role": "tool",
+                                "tool_name": function_name,
+                                "content": str(result),
+                            }
+                        )
+                        tool_calls_count += 1
+            else:
+                root.update(output=response.message.content)
+                break
         else:
-            break
-    else:
-        raise RecursionError(f"Agent exceed maximum iterations ({RECURSION_LIMIT})")
+            raise RecursionError(f"Agent exceed maximum iterations ({RECURSION_LIMIT})")
     # Return check
     if not response.message.content:
         raise ValueError("Model returned empty response")
@@ -66,6 +81,8 @@ def run_agent(
     response_time_ms = (
         (response.total_duration // 1_000_000) if response.total_duration else 0
     )
+    # Langfuse response
+    langfuse.flush()
     # Return statement
     return AgentResponse(
         message=response.message.content,
