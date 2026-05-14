@@ -7,8 +7,10 @@ requires-python = ">=3.14"
 
 dependencies = [
     "fastapi[standard]>=0.136.1",
+    "groq>=1.2.0",
     "httpx>=0.28.1",
     "instructor>=1.15.1",
+    "langchain-ollama>=1.1.0",
     "langchain-text-splitters>=1.1.2",
     "langfuse>=4.6.1",
     "ollama>=0.6.1",
@@ -16,6 +18,7 @@ dependencies = [
     "pydantic-settings>=2.14.0",
     "python-dotenv>=1.2.2",
     "qdrant-client>=1.17.1",
+    "ragas>=0.4.3",
     "rank-bm25>=0.2.2",
     "sentence-transformers>=5.4.1",
     "sse-starlette>=3.4.1",

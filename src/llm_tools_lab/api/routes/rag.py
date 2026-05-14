@@ -18,7 +18,7 @@ class RagRequest(BaseModel):
 
 
 @router.post("/query")
-async def rag_query(request: RagRequest) -> str:
+async def rag_query(request: RagRequest) -> tuple[str, list[str]]:
     try:
         return await asyncio.to_thread(
             text_rag_agent,
@@ -35,7 +35,7 @@ async def rag_query(request: RagRequest) -> str:
 
 
 @router.post("/hybrid")
-async def rag_hybrid(request: RagRequest) -> str:
+async def rag_hybrid(request: RagRequest) -> tuple[str, list[str]]:
     try:
         return await asyncio.to_thread(
             text_rag_agent,

@@ -12,9 +12,10 @@ def text_rag_agent(
     use_hybrid: bool = False,
     user_id: str | None = None,
     session_id: str | None = None,
-) -> str:
-    # Get langfuse
+) -> tuple[str, list[str]]:
+    # Initializations
     langfuse = get_langfuse()
+    context = []
     # RAG Agent measures
     with langfuse.start_as_current_observation(
         as_type="span", name="rag_query"
@@ -44,6 +45,7 @@ def text_rag_agent(
                 prompt = "Context:\n"
                 for chunk in relevant_chunks:
                     prompt += chunk["text"] + "\n"
+                    context.append(chunk["text"])
                 # Add user prompt
                 prompt += f"\n\nUser:\n{text}"
                 span.update(output={"prompt": prompt})
@@ -72,4 +74,4 @@ def text_rag_agent(
     # Close langfuse
     langfuse.flush()
     # Return statement
-    return response.message.content
+    return response.message.content, context
