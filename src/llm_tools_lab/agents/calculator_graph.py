@@ -83,7 +83,7 @@ def should_continue(state: AgentState) -> str:
 
 def after_review(state: AgentState) -> str:
     last_message = state["messages"][-1]
-    if state["cancelled"]:
+    if last_message["cancelled"]:
         return "format_response"
     return "tools"
 
